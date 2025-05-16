@@ -15,33 +15,33 @@ Ogni riga del file è composta da campi separati da tabulazioni (\t). Di consegu
 
 4)**Controllo della profesione:** Controllo se tra le professioni elencate nella colonna primaryProfession è presente "actor" o "actress", tramite il metodo ```verificaAttore()``` che: 
 
-- _Prende come Input:_ una stringa di lavori che rappresenta le professioni di una persona, separate da virgole.  
+- **_Prende come Input:_** una stringa di lavori che rappresenta le professioni di una persona, separate da virgole.  
 Ad esempio: "actor,director,producer" oppure "producer,actress".
 
-- _Poi effetua lo Split delle professioni:_  La stringa viene suddivisa in un array chiamato professioni usando il metodo ```split(",")```.
+- **_Poi effetua lo Split delle professioni:_** La stringa viene suddivisa in un array chiamato professioni usando il metodo ```split(",")```.
 Questo permette di ottenere ogni singola professione come elemento separato.
 
-- _Ciclo su ogni professione_: Il ciclo for esamina ogni professione nell’array.
+- **_Ciclo su ogni professione_:** Il ciclo for esamina ogni professione nell’array.
 Per ogni professione, si eliminano eventuali spazi bianchi iniziali e finali ```(trim())``` e si converte tutta la stringa in minuscolo ```(toLowerCase())```.Questo serve per evitare errori dovuti a differenze di maiuscole/minuscole o spazi indesiderati (anche se non ci dovrebbero essere nel file.tsv), Poi viene fatto il controllo sul campo "pulito" 
-- se la professione è esattamente "actor" oppure "actress", il metodo restituisce true, indicando che la persona è un attore o un’attrice.
-- Se nessuna professione corrisponde: Dopo aver esaminato tutte le professioni, se nessuna è "actor" o "actress", il metodo restituisce false.
+- se la professione è esattamente ```"actor"``` oppure ```"actress"```, il metodo restituisce ```true```, indicando che la persona è un attore o un’attrice.
+- Se nessuna professione corrisponde: Dopo aver esaminato tutte le professioni, se nessuna è ```"actor"``` o ```"actress"```, il metodo restituisce ```false```.
 
 5)**Creazione dell’oggetto Attore e inserimento nella mappa:**
 Se la riga supera tutti i controlli, viene creato un oggetto Attore con:  
-- campi[0]: codice univoco (nconst), a cui poi verrà tolto "nm" e trasformato in un intero nel costruttore della classe Attore  
-- campi[1]: nome dell’attore  
-- campi[2]: anno di nascita, (viene trasformato in un intero nel costruttore della classe Attore)
+- ```campi[0]```: codice univoco (nconst), a cui poi verrà tolto "nm" e trasformato in un intero nel costruttore della classe Attore  
+- ```campi[1]```: nome dell’attore  
+- ```campi[2]```: anno di nascita, (viene trasformato in un intero nel costruttore della classe Attore)
 L’attore viene infine aggiunto alla mappa attori, utilizzando come chiave il codice numerico derivato da nconst (es. "nm1234567" → 1234567):
 
-## Implementazione della coda FIFO nell'algoritmo BFS, ed informazioni memorizzate in ogni elemento della coda:
+# Implementazione della coda FIFO nell'algoritmo BFS, ed informazioni memorizzate in ogni elemento della coda:
 
-### Iplementazione coda FIFO
+## Iplementazione coda FIFO
 
 La coda è implementata come un array dinamico di puntatori a nodi ```(nodoAbr **coda)```, con una capacità iniziale definita (```capacita = 1024```),.
 
 Due indici gestiscono la coda:
-- **inizio:** posizione del primo elemento nella coda (da cui si estrae).
-- **fine**: posizione successiva all’ultimo elemento inserito (dove si inserisce).
+- ```inizio```: posizione del primo elemento nella coda (da cui si estrae).
+- ```fine```: posizione successiva all’ultimo elemento inserito (dove si inserisce).
 
 Le operazioni principali sono:
 ### enqueue:
@@ -54,8 +54,8 @@ Le operazioni principali sono:
 - Chiama la funzione ```compatta``` per eventualmente spostare gli elementi a sinistra se l’indice inizio è diventato troppo grande, evitando sprechi di spazio.
 
 ### dequeue:
-**Parametri:** puntatore alla coda, indici ```inizio``` e ```fine```, ```capacità corrente```.
-**Scopo:** Estre (rimuove e restituisce) il nodo in testa alla coda (indice ```inizio```).
+**Parametri:** puntatore alla coda, indici ```inizio``` e ```fine```, ```capacità corrente```.  
+**Scopo:** Estre (rimuove e restituisce) il nodo in testa alla coda (indice ```inizio```).  
 **Funzionamento:**
 - Verifica che la coda non sia vuota (```inizio < fine```).
 - Restituisce il nodo in posizione ```inizio``` e incrementa ```inizio```.
@@ -77,7 +77,7 @@ Le operazioni principali sono:
 - Rialloca la memoria con ```realloc``` per adattarla alla nuova dimensione.
 
 
-### Informazioni memorizzate in ogni elemento della coda:
+## Informazioni memorizzate in ogni elemento della coda:
 Ogni elemento della coda è un puntatore a un nodo di tipo nodoAbr, che contiene:
 - **val**: codice identificativo dell’attore (nodo) rappresentato.
 - **nome**: nome dell’attore, recuperato durante la visita.
@@ -90,8 +90,25 @@ Queste informazioni permettono di:
 - Ricostruire il percorso più breve una volta raggiunta la destinazione.
 - Gestire efficientemente la visita dei nodi senza duplicati.
 
-## Come vengono ricostruiti i nodi intermedi del cammino minimo in cammini.c :
+# Come vengono ricostruiti i nodi intermedi del cammino minimo in cammini.c :
+Una volta che l’algoritmo BFS ha trovato la destinazione, il cammino minimo non viene restituito direttamente, ma viene ricostruito risalendo l’albero di copertura generato durante la visita, questo viene svolto dalla funzione ```ricostruisciCammino```
 
+## ricostruisciCammino(nodoAbr *radice, int a, int b, nodoAbr **cammino)
+si occupa di risalire dai nodi foglia (```destinazione```) fino alla radice (```sorgente```) dell’albero, sfruttando i puntatori al padre (```padre```) memorizzati in ogni nodo. In questo modo vengono raccolti, tutti i nodi che compongono il cammino minimo tra ```a``` e ```b```.  
+
+#### Parametri
+ - ```nodoAbr *radice```: È la radice dell’albero di copertura costruito durante la BFS.
+ - ```int a```: Codice identificativo dell’attore sorgente (punto di partenza del cammino).
+ - ```int b```: Codice identificativo dell’attore destinazione (punto di arrivo del cammino).
+ - ```nodoAbr **cammino```: È un array di puntatori a ```nodoAbr```, passato per riferimento, in cui verrà salvato il cammino minimo da ```a``` a ```b```.  
+
+### Funzionamento
+- **Ricerca del nodo di destinazione:**  
+Si parte cercando, all'interno dell’albero di copertura ```radice```, il nodo corrispondente alla destinazione ```b```.
+La ricerca utilizza il valore ```shuffle(b)``` per trovare il nodo giusto (lo stesso valore usato nella BFS).  
+- **Risalita tramite il campo padre:** Una volta trovato il nodo, si risale lungo i puntatori ```padre```, aggiungendo ciascun nodo in un array```cammino```.
+Questo processo continua fino ad arrivare al nodo radice (che ha padre == NULL).  
+- **Inversione dell’array:** Poiché i nodi sono stati salvati dalla ```destinazione``` alla ```sorgente```, effettuo un'inversione dell'array per ottenere il cammino nell’ordine corretto: ```sorgente``` → … → ```destinazione```.
 
 ## Come il thread gestore di segnali comunica al programma principale di interrompere l'elaborazione:
 
