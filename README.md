@@ -79,11 +79,11 @@ Le operazioni principali sono:
 
 ## Informazioni memorizzate in ogni elemento della coda:
 Ogni elemento della coda è un puntatore a un nodo di tipo nodoAbr, che contiene:
-- **val**: codice identificativo dell’attore (nodo) rappresentato.
-- **nome**: nome dell’attore, recuperato durante la visita.
-- **anno**: anno di riferimento associato all’attore.
-- **profondita**: distanza del nodo dalla sorgente (numero di "passi" o "archi").
-- **padre**: puntatore al nodo genitore nell’albero di copertura, utile per ricostruire il cammino minimo.                          
+- ```val```: codice identificativo dell’attore (nodo) rappresentato.
+- ```nome```: nome dell’attore, recuperato durante la visita.
+- ```anno```: anno di riferimento associato all’attore.
+- ```profondita```: distanza del nodo dalla sorgente (numero di "passi" o "archi").
+- ```padre```: puntatore al nodo genitore nell’albero di copertura, utile per ricostruire il cammino minimo.                          
 
 Queste informazioni permettono di:
 - Tenere traccia dello stato della visita.
