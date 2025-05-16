@@ -1,6 +1,6 @@
 # Progetto Completo Lab2
 
-## Parsing delle righe del file di testo name.basics.tsv nel programma Java:
+# Parsing delle righe del file di testo name.basics.tsv nel programma Java:
 Il file name.basics.tsv contiene informazioni su persone del mondo cinematografico (attori, attrici, registi, ecc.).
 L'obiettivo del parsing è selezionare solo attori e attrici con anno di nascita conosciuto e memorizzarli in una mappa, per un successivo utilizzo nella costruzione del grafo.
 Ogni riga del file è composta da campi separati da tabulazioni (\t). Di conseguenza per effettuare il parsing delle righe del file name.basics.tsv, effettuo questa sequenza istruzioni:
@@ -113,4 +113,33 @@ Questo processo continua fino ad arrivare al nodo radice (che ha padre == NULL).
 ## Come il thread gestore di segnali comunica al programma principale di interrompere l'elaborazione:
 
 
-## Modo con cui vengono memorizzate e gestite le partecipazioni degli attori all'interno del programma Java:
+# Modo con cui vengono memorizzate e gestite le partecipazioni degli attori all'interno del programma Java:
+## Strutture con cui memorizzo i dati necessari
+
+Ogni attore è rappresentato da un’istanza della classe Attore, che contiene:
+- ```int codice```: identificativo numerico dell’attore (estratto da nconst, rimuovendo "nm").
+- ```String nome```: nome dell’attore.
+-  ```int anno```: anno di nascita.
+- ```Set<Integer>``` coprotagonisti: insieme ordinato (```TreeSet```) dei codici degli altri attori con cui ha recitato.
+- ```Set<Integer> films```: insieme ordinato dei codici dei film a cui ha partecipato.  
+Queste strutture dati sono private e accessibili solo tramite i metodi getter, garantendo l'incapsulamento, di cui ovviamente ho fornito la classe Attore.
+
+#### Mappa Map<Integer, Attore> attori
+Tutti gli attori vengono memorizzati in una TreeMap, dove:
+- La chiave è il codice numerico dell’attore.
+- Il valore è l’oggetto Attore associato.
+- Questa struttura mantiene gli attori ordinati per codice.
+
+#### Mappa Map<String, Set<Integer>> castMap
+Durante la lettura del file ```title.principals.tsv```, costruisco una mappa ```castMap``` dove:
+- La chiave è il _codice del film_ (tconst).
+- Il valore è un ```TreeSet``` di codici attori (Integer) che compongono il cast del film, ovviamente ordinati 
+
+## Gestione delle partecipazioni:
+La gestione effettiva delle partecipazioni degli attori ai film avviene quando il cast di un film è completo. In quel momento, viene chiamata la funzione: ```aggiornaFilms(entry.getValue(), attori, entry.getKey());``` che svolge alcuni passi:
+
+- **Conversione del codice film:** Viene rimosso il prefisso "tt" dalla stringa film e il resto viene convertito in int, per uniformarlo al formato usato nella classe ```Attore```.
+- **Aggiornamento dei singoli attori:** Si scorre ogni componente del cast del film. Se l’attore è presente nella mappa ```attori``` cioè se è un attore valido, allora si aggiunge ```codiceFilm``` al suo set di ```film```.
+
+
+
