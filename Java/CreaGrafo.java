@@ -47,11 +47,11 @@ public class CreaGrafo {
 
             /* Scrivo nel file i dati di tutti gli attori, nel fomato TSV */
             for (Attore attore : attori.values()) {
-                String linea = "" + attore.getCodice() + "\t" + attore.getNome() + "\t" + attore.getAnno();
-                bw.write(linea);// scrive la linea in fomato TSV
-                bw.newLine();// va a capo
+                StringBuilder linea= new StringBuilder();
+                linea.append(attore.getCodice()).append("\t").append(attore.getNome()).append("\t").append(attore.getAnno());
+                bw.write(linea.toString());// scrivo la linea in fomato TSV
+                bw.newLine();// vado a capo
             }
-
             bw.close();
 
         } catch (Exception e) {
