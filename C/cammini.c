@@ -281,21 +281,6 @@ void produttore(const char *grafotxt, int numConsumatori, int numeroAttori, atto
     free(buffer);
 }
 
-void scrivi(int numeroAttori, attore *attori)
-{
-    FILE *outputFile = xfopen("prova.txt", "w", QUI);
-    for (int i = 0; i < numeroAttori; i++)
-    {
-        fprintf(outputFile, "%d\t%d", attori[i].codice, attori[i].numcop);
-        for (int j = 0; j < attori[i].numcop; j++)
-        {
-            fprintf(outputFile, "\t%d", attori[i].cop[j]);
-        }
-        fprintf(outputFile, "\n");
-    }
-    fclose(outputFile);
-}
-
 // Funzione che scrive i cammini nel file a.b e stampa a video il messaggio
 void scriviCammini(int a, int b, nodoAbr *alberoCopertura, int trovato, double tempo)
 {
