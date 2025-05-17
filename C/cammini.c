@@ -309,15 +309,15 @@ void scriviCammini(int a, int b, nodoAbr *alberoCopertura, int trovato, double t
     switch (trovato)
     {
     case -1: // se la sorgente non appartiene al grafo
-        fprintf(camminiFile, "codice %d non valido\n", a);
-        printf("%s: Codice %d non valido. Tempo di elaborazione:%f\n", strCammino, a, tempo);
+        fprintf(camminiFile, "codice %d non valido", a);
+        printf("%s: Codice %d non valido. Tempo di elaborazione:%f \n", strCammino, a, tempo);
         break;
     case -2: // se lad destinazione non appartiene al grafo
-        fprintf(camminiFile, "codice %d non valido\n", b);
-        printf("%s: Codice %d non valido. Tempo di elaborazione:%f\n", strCammino, b, tempo);
+        fprintf(camminiFile, "codice %d non valido", b);
+        printf("%s: Codice %d non valido. Tempo di elaborazione:%f \n", strCammino, b, tempo);
         break;
     case 0: // se il cammino non esiste
-        fprintf(camminiFile, "non esistono cammini da %d a %d\n", a, b);
+        fprintf(camminiFile, "non esistono cammini da %d a %d", a, b);
         printf("%s: Nessun cammino. Tempo di elaborazione:%f \n", strCammino, tempo);
         break;
 
