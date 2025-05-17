@@ -6,8 +6,9 @@
 // Struttura usata per la gestione dei segnali
 typedef struct
 {
-    int faseLettura;       // indica se la fase di lettura è iniziata
-    pthread_mutex_t mutex; // mutex per sincronizzare l'accesso al file
+    int faseLettura;        // indica se la fase di lettura è iniziata
+    int termina;            // indica al main che deve terminare
+    pthread_mutex_t *mutex; // mutex per sincronizzare l'accesso al file
 } datiGestoreSegnali;
 
 // Struttura usata per passare i dati al thread calcolatore
@@ -309,15 +310,15 @@ void scriviCammini(int a, int b, nodoAbr *alberoCopertura, int trovato, double t
     switch (trovato)
     {
     case -1: // se la sorgente non appartiene al grafo
-        fprintf(camminiFile, "codice %d non valido", a);
-        printf("%s: Codice %d non valido. Tempo di elaborazione:%f \n", strCammino, a, tempo);
+        fprintf(camminiFile, "codice %d non valido\n", a);
+        printf("%s: Codice %d non valido. Tempo di elaborazione:%f\n", strCammino, a, tempo);
         break;
     case -2: // se lad destinazione non appartiene al grafo
-        fprintf(camminiFile, "codice %d non valido", b);
-        printf("%s: Codice %d non valido. Tempo di elaborazione:%f \n", strCammino, b, tempo);
+        fprintf(camminiFile, "codice %d non valido\n", b);
+        printf("%s: Codice %d non valido. Tempo di elaborazione:%f\n", strCammino, b, tempo);
         break;
     case 0: // se il cammino non esiste
-        fprintf(camminiFile, "non esistono cammini da %d a %d", a, b);
+        fprintf(camminiFile, "non esistono cammini da %d a %d\n", a, b);
         printf("%s: Nessun cammino. Tempo di elaborazione:%f \n", strCammino, tempo);
         break;
 
@@ -464,14 +465,21 @@ void creaPipe(attore *attori, int numeroAttori, datiGestoreSegnali *dati)
     if (fd == -1)
         xtermina("Errore: verificato nell'apertura della pipe", QUI);
 
-    pthread_mutex_lock(&dati->mutex);
+    xpthread_mutex_lock(dati->mutex, QUI);
     dati->faseLettura = 1; // Notifico al gestore segnali che la fase di lettura è iniziata
-    pthread_mutex_unlock(&dati->mutex);
+    xpthread_mutex_unlock(dati->mutex, QUI);
 
     while (1)
     {
-        coppia dati;
-        ssize_t e = read(fd, &dati, sizeof(coppia));
+        // Controllo se è stato richiesto di terminare (da gestore segnali)
+        xpthread_mutex_lock(dati->mutex, QUI);
+        int terminazione = dati->termina;
+        xpthread_mutex_unlock(dati->mutex, QUI);
+        if (terminazione) // se si termino
+            break;
+
+        coppia coppiaLetta;
+        ssize_t e = read(fd, &coppiaLetta, sizeof(coppia));
         if (e == -1)
             xtermina("Errore nella lettura", QUI);
         if (e == 0)
@@ -479,8 +487,8 @@ void creaPipe(attore *attori, int numeroAttori, datiGestoreSegnali *dati)
 
         calcolatore *tcb = malloc(1 * sizeof(calcolatore)); // la struct che rappresenta il thread calcolatore
         // inizializzo i campi della struct
-        tcb->a = dati.a;
-        tcb->b = dati.b;
+        tcb->a = coppiaLetta.a;
+        tcb->b = coppiaLetta.b;
         tcb->grafo = attori;
         tcb->numeroAttori = numeroAttori;
 
@@ -512,17 +520,24 @@ void *gestoreSegnali(void *args)
     {
         int segnale;
         int e = sigwait(&mask, &segnale);
-        if (e == -1)
+        if (e != 0)
             xtermina("Errore nella sigwait", QUI);
 
-        if (segnale == SIGUSR1) // se il segnale è SIGUSR1, vuol dire è iniziata la fase di lettura, quindi termino
+        if (segnale == SIGUSR1) // se il segnale è SIGUSR1, vuol dire che il main ha terminato quindi termino
             break;
 
-        pthread_mutex_lock(&dati->mutex);
+        xpthread_mutex_lock(dati->mutex, QUI);
         if (dati->faseLettura == 0) // se non sono in fase di lettura lo notifico su stdout
+        {
             fprintf(stderr, " Costruzione del grafo in corso\n");
-
-        pthread_mutex_unlock(&dati->mutex);
+            xpthread_mutex_unlock(dati->mutex, QUI);
+        }
+        else
+        { // altrimenti segnala la terminazione al main e termino anche il gestore segnale
+            dati->termina = 1;
+            xpthread_mutex_unlock(dati->mutex, QUI);
+            break;
+        }
     }
 
     return NULL;
@@ -542,7 +557,8 @@ int main(int argc, char const *argv[])
     pthread_mutex_t mutextSegnali = PTHREAD_MUTEX_INITIALIZER; // mutex per sincronizzare l'accesso al file
     datiGestoreSegnali dati;
     dati.faseLettura = 0;
-    dati.mutex = mutextSegnali;
+    dati.termina = 0;
+    dati.mutex = &mutextSegnali;
     xpthread_create(&trheadGestore, NULL, gestoreSegnali, &dati, QUI); // creo il thread gestore segnali
 
     // Controllo degli argomenti passati
@@ -570,9 +586,11 @@ int main(int argc, char const *argv[])
     creaPipe(attori, numeroAttori, &dati);
 
     // Terminazione tread gestoreSegnali e deallocazione finale,
-    pthread_kill(trheadGestore, SIGUSR1);  // invio il segnale SIGUSR1 al thread gestore segnali, per farlo terminare
-    pthread_join(trheadGestore, NULL);     // aspetto che il thread gestore segnali termini
-    pthread_mutex_destroy(&mutextSegnali); // distruggo la mutex
+    if (dati.termina == 0)                    // cioè se non è stato terminato il thread gestore
+        pthread_kill(trheadGestore, SIGUSR1); // invio il segnale SIGUSR1 al thread gestore segnali, per farlo terminare
+
+    xpthread_join(trheadGestore, NULL, QUI);     // aspetto che il thread gestore segnali termini
+    xpthread_mutex_destroy(&mutextSegnali, QUI); // distruggo la mutex
     for (int i = 0; i < numeroAttori; i++)
     {
         free(attori[i].nome);
