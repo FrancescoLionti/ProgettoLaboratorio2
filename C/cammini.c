@@ -281,6 +281,21 @@ void produttore(const char *grafotxt, int numConsumatori, int numeroAttori, atto
     free(buffer);
 }
 
+void scrivi(int numeroAttori, attore *attori)
+{
+    FILE *outputFile = xfopen("prova.txt", "w", QUI);
+    for (int i = 0; i < numeroAttori; i++)
+    {
+        fprintf(outputFile, "%d\t%d", attori[i].codice, attori[i].numcop);
+        for (int j = 0; j < attori[i].numcop; j++)
+        {
+            fprintf(outputFile, "\t%d", attori[i].cop[j]);
+        }
+        fprintf(outputFile, "\n");
+    }
+    fclose(outputFile);
+}
+
 // Funzione che scrive i cammini nel file a.b e stampa a video il messaggio
 void scriviCammini(int a, int b, nodoAbr *alberoCopertura, int trovato, double tempo)
 {
@@ -294,15 +309,15 @@ void scriviCammini(int a, int b, nodoAbr *alberoCopertura, int trovato, double t
     switch (trovato)
     {
     case -1: // se la sorgente non appartiene al grafo
-        fprintf(camminiFile, "codice %d non valido\n", a);
+        fprintf(camminiFile, "codice %d non valido", a);
         printf("%s: Codice %d non valido. Tempo di elaborazione:%f \n", strCammino, a, tempo);
         break;
     case -2: // se lad destinazione non appartiene al grafo
-        fprintf(camminiFile, "codice %d non valido\n", b);
+        fprintf(camminiFile, "codice %d non valido", b);
         printf("%s: Codice %d non valido. Tempo di elaborazione:%f \n", strCammino, b, tempo);
         break;
     case 0: // se il cammino non esiste
-        fprintf(camminiFile, "non esistono cammini da %d a %d\n", a, b);
+        fprintf(camminiFile, "non esistono cammini da %d a %d", a, b);
         printf("%s: Nessun cammino. Tempo di elaborazione:%f \n", strCammino, tempo);
         break;
 
@@ -317,7 +332,7 @@ void scriviCammini(int a, int b, nodoAbr *alberoCopertura, int trovato, double t
         if (!cammino)
             xtermina("Errore: allocazione cammino fallita", QUI);
 
-        // riempio l'array di nodi che fanno parte del cammino, quindi ricostruisco il cammino
+        // riempio l'array di nodi che fanno parte del cammino
         ricostruisciCammino(alberoCopertura, a, b, cammino);
 
         // scrivo i cammini nel file
