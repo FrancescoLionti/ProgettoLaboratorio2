@@ -139,7 +139,7 @@ Durante la lettura del file ```title.principals.tsv```, costruisco una mappa ```
 La gestione effettiva delle partecipazioni degli attori ai film avviene quando il cast di un film è completo. In quel momento, viene chiamata la funzione: ```aggiornaFilms(entry.getValue(), attori, entry.getKey());``` che svolge alcuni passi:
 
 - **Conversione del codice film:** Viene rimosso il prefisso "tt" dalla stringa film e il resto viene convertito in int, per uniformarlo al formato usato nella classe ```Attore```.
-- **Aggiornamento dei singoli attori:** Si scorre ogni componente del cast del film. Se l’attore è presente nella mappa ```attori``` cioè se è un attore valido, allora si aggiunge ```codiceFilm``` al suo set di ```film```.
+- **Aggiornamento dei singoli attori:** Si scorre ogni componente del cast del film. Se l’attore è presente nella mappa ```attori``` cioè se è un attore valido, allora si aggiunge il ```codiceFilm``` al suo set di ```film```.
 
 
 
