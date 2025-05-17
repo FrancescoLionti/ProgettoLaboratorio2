@@ -110,7 +110,7 @@ La ricerca utilizza il valore ```shuffle(b)``` per trovare il nodo giusto (lo st
 Questo processo continua fino ad arrivare al nodo radice (che ha padre == NULL).  
 - **Inversione dell’array:** Poiché i nodi sono stati salvati dalla ```destinazione``` alla ```sorgente```, effettuo un'inversione dell'array per ottenere il cammino nell’ordine corretto: ```sorgente``` → … → ```destinazione```.
 
-## Come il thread gestore di segnali comunica al programma principale di interrompere l'elaborazione:
+# Come il thread gestore di segnali comunica al programma principale di interrompere l'elaborazione:
 Il meccanismo di comunicazione tra il thread gestore di segnali e il programma principale si basa su una struttura dati condivisa ```(datiGestoreSegnali)``` protetta da un mutex:
 ```
 typedef struct {
@@ -121,8 +121,14 @@ typedef struct {
 ```
 Il procedimento è il seguente: 
 ### Inizializzazione:
-Nel main,viene creata una struct``` dati``` di tipo ```datiGestoreSegnali```, poi  ```dati.faseLettura``` ed ```dati.termina``` sono inizializzati a 0, ed viene anche assegnata la muetex ad ```dati.mutex```. In seguito il main blocca i segnali ```SIGINT``` e ```SIGUSR1``` con ```pthread_sigmask```.
+Nel main,viene creata una struct ```dati``` di tipo ```datiGestoreSegnali```, poi  ```dati.faseLettura``` ed ```dati.termina``` sono inizializzati a 0, e viene inizializzato anche il campo ```dati.mutex``` . In seguito il main blocca i segnali ```SIGINT``` e ```SIGUSR1``` con ```pthread_sigmask```.
 E come ultimo si crea il thread gestore segnali con ```xpthread_create(&trheadGestore, NULL, gestoreSegnali, &dati, QUI)```;
+
+### Lettura dalla pipe:
+- Subito aver creato la pipe il main setta la variabile datifaseLettura=1, in modo da segnalare al threadGestore di essere entrari appunto nella fase di lettura
+- Poi entra in un ciclo in cui legge le coppie dalla pipe e, per ciascuna, avvia un thread calcolatore che esegue il cammino minimo tra due attori.
+- Durante ogni iterazione del ciclo, prima di elaborare una nuova coppia, creaPipe controlla (in sezione critica) il valore del flag termina. Se il flag è stato impostato a 1 dal gestore segnali, il ciclo si interrompe e la funzione procede alla chiusura della pipe e alla rimozione del file FIFO. In questo modo, il thread principale rispetta la richiesta di interruzione proveniente dal gestore dei segnali.
+- Ovviamente tutte le letture e modifiche dei dati condivisi con il gestore sono protetti da mutex
 
 ### gestoreSegnali:
 Il thread gestoreSegnali svolge il compito di intercettare in modo sincrono i segnali ```SIGINT``` (generato da CTRL+C) e ```SIGUSR1``` (utilizzato internamente per segnalare al gestore di terminare).
@@ -134,6 +140,9 @@ All’avvio, il gestore crea una maschera ```mask``` contenente ```SIGINT``` e `
 - Se la lettura è già in corso (```faseLettura == 1```), il gestore riconosce che il programma è nella fase critica di elaborazione e decide di interrompere l’operazione. Accedendo in mutua esclusione al campo ```termina```, imposta ```termina = 1```, segnalando così al thread di lettura (cioè il main) la richiesta di arrestarsi. Subito dopo, il gestore esce dal loop di ascolto e termina.
 
 ```SIGUSR1:``` quando il main ha finito di svolgere i suoi compiti (al termine della lettura dalla pipe e dopo aver gestito tutti i calcoli, ed aver atteso 20 sec), se il ThreadGestore non è ancora terminato invia ```SIGUSR1``` al gestore. Il thread riceve tale segnale e, riconoscendolo come istruzione di chiusura, esce immediatamente dal ciclo di ascolto e termina.
+
+### Conclusione:
+ L’uso di mutex nella manipolazione del flag ```termina``` ed ```faselettura``` assicura coerenza e assenza di race condition, mentre la separazione dei segnali in ```SIGUSR1``` e ```SIGINT``` permette di distinguere chiaramente tra la terminazione ordinaria e quella forzata dall’utente.
 
 # Modo con cui vengono memorizzate e gestite le partecipazioni degli attori all'interno del programma Java:
 ## Strutture con cui memorizzo i dati necessari
