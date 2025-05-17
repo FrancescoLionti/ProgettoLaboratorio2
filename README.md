@@ -124,7 +124,7 @@ Il procedimento è il seguente:
 Nel main,viene creata una struct``` dati``` di tipo ```datiGestoreSegnali```, poi  ```dati.faseLettura``` ed ```dati.termina``` sono inizializzati a 0, ed viene anche assegnata la muetex ad ```dati.mutex```. In seguito il main blocca i segnali ```SIGINT``` e ```SIGUSR1``` con ```pthread_sigmask```.
 E come ultimo si crea il thread gestore segnali con ```xpthread_create(&trheadGestore, NULL, gestoreSegnali, &dati, QUI)```;
 
-#### gestoreSegnali:
+### gestoreSegnali:
 Il thread gestoreSegnali svolge il compito di intercettare in modo sincrono i segnali ```SIGINT``` (generato da CTRL+C) e ```SIGUSR1``` (utilizzato internamente per segnalare al gestore di terminare).
 All’avvio, il gestore crea una maschera ```mask``` contenente ```SIGINT``` e ```SIGUSR1``` e si posiziona in attesa con ```sigwait```.
 
@@ -133,7 +133,8 @@ All’avvio, il gestore crea una maschera ```mask``` contenente ```SIGINT``` e `
 - Se la lettura dalla pipe non è ancora iniziata (```faseLettura == 0```), il gestore stampa un messaggio informativo su stderr, avvisando l’utente che la fase di costruzione del grafo è in corso
 - Se la lettura è già in corso (```faseLettura == 1```), il gestore riconosce che il programma è nella fase critica di elaborazione e decide di interrompere l’operazione. Accedendo in mutua esclusione al campo ```termina```, imposta ```termina = 1```, segnalando così al thread di lettura (cioè il main) la richiesta di arrestarsi. Subito dopo, il gestore esce dal loop di ascolto e termina.
 
-SIGUSR1: quando il main decide che l’applicazione ha completato le sue operazioni (ad esempio, al termine della lettura dalla pipe e dopo aver gestito tutti i calcoli), invia SIGUSR1 al gestore. Il thread riceve tale segnale e, riconoscendolo come istruzione di chiusura, esce immediatamente dal ciclo di ascolto e termina.
+```SIGUSR1:``` quando il main ha finito di svolgere i suoi compiti (al termine della lettura dalla pipe e dopo aver gestito tutti i calcoli, ed aver atteso 20 sec), se il ThreadGestore non è ancora terminato invia ```SIGUSR1``` al gestore. Il thread riceve tale segnale e, riconoscendolo come istruzione di chiusura, esce immediatamente dal ciclo di ascolto e termina.
+
 # Modo con cui vengono memorizzate e gestite le partecipazioni degli attori all'interno del programma Java:
 ## Strutture con cui memorizzo i dati necessari
 
