@@ -145,37 +145,88 @@ All’avvio, il gestore crea una maschera ```mask``` contenente ```SIGINT``` e `
  L’uso di mutex nella manipolazione del flag ```termina``` ed ```faselettura``` assicura coerenza e assenza di race condition, mentre la separazione dei segnali in ```SIGUSR1``` e ```SIGINT``` permette di distinguere chiaramente tra la terminazione ordinaria e quella forzata dall’utente.
 
 # Modo con cui vengono memorizzate e gestite le partecipazioni degli attori all'interno del programma Java:
-## Strutture con cui memorizzo i dati necessari
 
-Ogni attore è rappresentato da un’istanza della classe Attore, che contiene:
-- ```int codice```: identificativo numerico dell’attore (estratto da nconst, rimuovendo "nm").
-- ```String nome```: nome dell’attore.
--  ```int anno```: anno di nascita.
-- ```Set<Integer>``` coprotagonisti: insieme ordinato (```TreeSet```) dei codici degli altri attori con cui ha recitato.
-- ```Set<Integer> films```: insieme ordinato dei codici dei film a cui ha partecipato.  
+## Aggiunta di films(cioè le partecipazioni) alla classe attore
+Ogni attore è rappresentato da un’istanza della classe ```Attore```, che contiene tutte le caratteristiche elencate nella consegna, in aggiunta, ho introdotto
+- ```Set<Integer> films```: insieme ordinato (```TreeSet```) dei codici dei film a cui ha partecipato, cioè le partecipazioni
 
-Queste strutture dati sono dichiarate private e sono accessibili solo tramite metodi getter, in linea con il principio dell'incapsulamento. La classe Attore fornisce tutti i metodi necessari per gestire in modo sicuro queste informazioni.
+## Sintesi del processo con cui  vengono aggiornate le partecipazioni
+Il codice costruisce un insieme (ordinato) di attori cioè il cast per ciascun film, e ogni volta che passa a un nuovo film o raggiunge la fine, invoca due metodi che:
+- Aggiornano le collaborazioni .
+- Aggiornano la lista di film in cui ogni attore ha recitato, cioè le partecipazioni
 
-#### Mappa Map<Integer, Attore> attori
-Tutti gli attori vengono memorizzati in una TreeMap, dove:
-- La chiave è il codice numerico dell’attore.
-- Il valore è l’oggetto Attore associato.
-- Questa struttura mantiene gli attori ordinati per codice.
+## Processo completo di come vengono aggiornate le partecipazioni
 
-#### Mappa Map<String, Set<Integer>> castMap
-Durante la lettura del file ```title.principals.tsv```, costruisco una mappa ```castMap``` dove:
-- La chiave è il _codice del film_ (tconst).
-- Il valore è un ```TreeSet``` di codici attori (Integer) che compongono il cast del film, ovviamente gli ID sono ordinati in modo crescente.
+#### 1)Apro il file, e salto l'intestazione
 
-## Gestione delle partecipazioni:
-La gestione effettiva delle partecipazioni avviene quando il cast di ogni film è stato completamente costruito. A quel punto per  ciascun film presente nella mappa ```castMap```, il programma chiama la funzione ```aggiornaFilms()```.
+#### 2)Inizializzazione delle variabili necessarie per gestire le collaborazioni
+```
+String filmCorrente = null;
+Set<Integer> castCorrente = new TreeSet<>();
+```
+- ```filmCorrente``` terrà il codice (ID) del film che stiamo processando.
+- ```castCorrente``` è un insieme ordinato (TreeSet) di attori (i loro codici interi) presenti nel film corrente.
 
-#### Funzione void aggiornaFilms(Set<Integer> cast, Map<Integer, Attore> attori, String film): 
-svolge le seguenti azioni:
+#### 3)Per ogni riga successiva all'intestazione (fino alla fine del file) effettuo il parsing dei campi
+```
+while ((linea = br.readLine()) != null) {
+    String[] campi = linea.split("\t");
+    String codiceFilm = campi[0];
+    Integer codiceAttore = parseCodiceAttore(campi[2]);
+```
+- ```codiceFilm```: è il codice del film appena parsato
+- ```codiceAttore```: è il codice dell'attore appena parsato
 
-- **Conversione del codice film:** la stringa del tipo "tt0123456" viene trasformata in un intero eliminando il prefisso "tt" ```
-(substring(2))``` rendendola coerente con il formato numerico usato internamente.
-- **Aggiornamento delle partecipazioni:** per ogni attore appartenente al cast, se presente nella mappa ```attori```, viene aggiornato il suo insieme ```films```, aggiungendo il codice del film in cui ha partecipato
+#### 4)Se l’attore non è nella mappa attori (cioè non ci interessa), saltiamo subito alla riga successiva.
 
-In questo modo, ogni attore mantiene un elenco aggiornato e ordinato di tutti i film a cui ha preso parte.
+#### 5)Rilevazione di un nuovo film:
+```
+if (!codiceFilm.equals(filmCorrente)) {
+    if (filmCorrente != null) {
+        // prima di passare al nuovo film, elaboriamo il cast accumulato
+        aggiornaCollaborazioni(castCorrente, attori);
+        aggiornaFilms(castCorrente, attori, filmCorrente);
+    }
+    filmCorrente = codiceFilm;
+    castCorrente = new TreeSet<>();
+}
+```
+- Se l’ID del film letto (```codiceFilm```) è diverso da quello salvato in ```filmCorrente```, significa che abbiamo finito di raccogliere tutti gli attori del film precedente:
+- Se ```filmCorrente``` non è null (cioè non siamo al primissimo film), chiamo:
+ ```aggiornaCollaborazioni(castCorrente, attori```): per registrare le collaborazioni fra tutti gli attori del film.
+ ```aggiornaFilms(castCorrente, attori, filmCorrente)```: per aggiungere il film alla filmografia di ciascun attore.
+- Poi agiorno ```filmCorrente``` al nuovo ID e reinizializzo```castCorrente``` per il prossimo gruppo di attori.
+
+#### 6)Aggiungo il codiceAttore al cast:
+```castCorrente.add(codiceAttore)```;
+
+#### 7)Elaborazione finale dopo l’ultimo film:
+```
+if (filmCorrente != null) {
+    aggiornaCollaborazioni(castCorrente, attori);
+    aggiornaFilms(castCorrente, attori, filmCorrente);
+}
+br.close();
+```
+- Quando il ciclo finisce, serve un’ultima chiamata ad ```aggiornaCollaborazioni``` e ```aggiornaFilms``` per l’ultimo film letto.
+## metodo aggiornaFilms()
+```
+public static void aggiornaFilms(Set<Integer> cast, Map<Integer, Attore> attori, String film) {
+        final int codiceFilm = Integer.parseInt(film.substring(2));
+        
+        for (Integer idAttore : cast) {
+            Attore attore = attori.get(idAttore);
+            if (attore != null) {
+                attore.getFilm().add(codiceFilm);
+            }
+        }
+    }
+```
+
+- dalla stringa film (es. "tt1234567") si rimuove il prefisso e si converte la parte rimanente in un intero (1234567), così il codice del film è uniforme alle altre rappresentazioni.
+-  per ogni ```idAttore``` nel set ```cast```, si recupera l’oggetto ```Attore``` corrispondente dalla mappa ```attori```.
+-   se l’attore esiste, al suo campo ```film``` (collezione di interi) viene aggiunto il ```codiceFilm```.
+
+#### Risultato:
+Al termine del metodo, ciascun oggetto Attore nella mappa avrà, nel suo campo “film”, l’elenco aggiornato di tutti i film (identificati dall’ID numerico) in cui ha preso parte,
 
