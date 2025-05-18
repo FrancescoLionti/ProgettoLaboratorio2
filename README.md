@@ -227,6 +227,4 @@ public static void aggiornaFilms(Set<Integer> cast, Map<Integer, Attore> attori,
 -  per ogni ```idAttore``` nel set ```cast```, si recupera l’oggetto ```Attore``` corrispondente dalla mappa ```attori```.
 -   se l’attore esiste, al suo campo ```film``` (collezione di interi) viene aggiunto il ```codiceFilm```.
 
-#### Risultato:
-Al termine del metodo, ciascun oggetto Attore nella mappa avrà, nel suo campo “film”, l’elenco aggiornato di tutti i film (identificati dall’ID numerico) in cui ha preso parte,
 
