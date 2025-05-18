@@ -168,11 +168,7 @@ Durante la lettura del file ```title.principals.tsv```, costruisco una mappa ```
 - Il valore è un ```TreeSet``` di codici attori (Integer) che compongono il cast del film, ovviamente gli ID sono ordinati in modo crescente.
 
 ## Gestione delle partecipazioni:
-La gestione effettiva delle partecipazioni avviene quando il cast di ogni film è stato completamente costruito. Per ciascun film presente nella mappa ```castMap```, il programma esegue:
-
-```
-    aggiornaFilms(entry.getValue(), attori, entry.getKey());
-```
+La gestione effettiva delle partecipazioni avviene quando il cast di ogni film è stato completamente costruito. A quel punto per  ciascun film presente nella mappa ```castMap```, il programma chiama la funzione ```aggiornaFilms()```.
 
 #### Funzione void aggiornaFilms(Set<Integer> cast, Map<Integer, Attore> attori, String film): 
 svolge le seguenti azioni:
