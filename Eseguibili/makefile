@@ -1,7 +1,7 @@
 # ==============================================================
 # 						Compilazione Java
 # ==============================================================
-.PHONY: all java c valgrind-c clean clean-java clean-c 
+.PHONY: all java c clean clean-java clean-c 
 
 all: java c
 
