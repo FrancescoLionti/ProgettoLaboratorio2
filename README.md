@@ -153,7 +153,8 @@ Ogni attore è rappresentato da un’istanza della classe Attore, che contiene:
 -  ```int anno```: anno di nascita.
 - ```Set<Integer>``` coprotagonisti: insieme ordinato (```TreeSet```) dei codici degli altri attori con cui ha recitato.
 - ```Set<Integer> films```: insieme ordinato dei codici dei film a cui ha partecipato.  
-Queste strutture dati sono private e accessibili solo tramite i metodi getter, garantendo l'incapsulamento, di cui ovviamente ho fornito la classe Attore.
+
+Queste strutture dati sono dichiarate private e sono accessibili solo tramite metodi getter, in linea con il principio dell'incapsulamento. La classe Attore fornisce tutti i metodi necessari per gestire in modo sicuro queste informazioni.
 
 #### Mappa Map<Integer, Attore> attori
 Tutti gli attori vengono memorizzati in una TreeMap, dove:
@@ -164,13 +165,21 @@ Tutti gli attori vengono memorizzati in una TreeMap, dove:
 #### Mappa Map<String, Set<Integer>> castMap
 Durante la lettura del file ```title.principals.tsv```, costruisco una mappa ```castMap``` dove:
 - La chiave è il _codice del film_ (tconst).
-- Il valore è un ```TreeSet``` di codici attori (Integer) che compongono il cast del film, ovviamente ordinati 
+- Il valore è un ```TreeSet``` di codici attori (Integer) che compongono il cast del film, ovviamente gli ID sono ordinati in modo crescente.
 
 ## Gestione delle partecipazioni:
-La gestione effettiva delle partecipazioni degli attori ai film avviene quando il cast di ogni film è completo. In quel momento, viene chiamata la funzione: ```aggiornaFilms(entry.getValue(), attori, entry.getKey());``` che svolge alcuni passi:
+La gestione effettiva delle partecipazioni avviene quando il cast di ogni film è stato completamente costruito. Per ciascun film presente nella mappa ```castMap```, il programma esegue:
 
-- **Conversione del codice film:** Viene rimosso il prefisso "tt" dalla stringa film e il resto viene convertito in int, per uniformarlo al formato usato nella classe ```Attore```.
-- **Aggiornamento dei singoli attori:** Si scorre ogni componente del cast del film. Se l’attore è presente nella mappa ```attori``` cioè se è un attore valido, allora si aggiunge il ```codiceFilm``` al suo set di ```film```.
+```
+    aggiornaFilms(entry.getValue(), attori, entry.getKey());
+```
 
+#### Funzione void aggiornaFilms(Set<Integer> cast, Map<Integer, Attore> attori, String film): 
+svolge le seguenti azioni:
 
+- **Conversione del codice film:** la stringa del tipo "tt0123456" viene trasformata in un intero eliminando il prefisso "tt" ```
+(substring(2))``` rendendola coerente con il formato numerico usato internamente.
+- **Aggiornamento delle partecipazioni:** per ogni attore appartenente al cast, se presente nella mappa ```attori```, viene aggiornato il suo insieme ```films```, aggiungendo il codice del film in cui ha partecipato
+
+In questo modo, ogni attore mantiene un elenco aggiornato e ordinato di tutti i film a cui ha preso parte.
 
