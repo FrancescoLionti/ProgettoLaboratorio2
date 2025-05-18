@@ -62,58 +62,34 @@ public class CreaGrafo {
         try {
 
             BufferedReader br = new BufferedReader(new FileReader(args[1]));
-            String linea = br.readLine(); /* salta l'intestazione */
-
-            if (linea == null) // file vuoto dopo l'intestazione
-            {
-                br.close(); // chiude il file
-                throw new IOException("\nLetta riga vuota nel file title.principals.tsv");
-            }
-
-            linea = br.readLine(); // Prima riga utile
-            if (linea == null)// file vuoto dopo la prima linea utile
-            {
-                br.close(); // chiude il file
-                throw new IOException("\nLetta riga vuota nel file title.principals.tsv");
-            }
-
-            Map<String, Set<Integer>> castMap = new HashMap<>(); // Mappa che conterrà il cast per ogni film
-
-            String[] campi = linea.split("\t");
-            String codiceFilm = campi[0];
-            Integer codiceAttore = parseCodiceAttore(campi[2]); /* il codice dell'attore nel formato corretto */
-
-            /* inserisco la persona nel cast, soltanto se è un attore */
-            if (attori.containsKey(codiceAttore)) {
-                Set<Integer> cast = new TreeSet<>();
-                cast.add(codiceAttore);
-                castMap.put(codiceFilm, cast); // Aggiungo il film con il suo cast
-            }
-
-            /* continuo ad aggiornare i cast dei film */
+            String linea = br.readLine(); // intestazione
+            if (linea == null) throw new IOException("File vuoto");
+        
+            String filmCorrente = null;
+            Set<Integer> castCorrente = new TreeSet<>();
+        
             while ((linea = br.readLine()) != null) {
-                campi = linea.split("\t");
-                String nuovoCodiceFilm = campi[0];
-                Integer nuovoCodiceAttore = parseCodiceAttore(campi[2]);
-
-                if (!attori.containsKey(nuovoCodiceAttore))
-                    continue; // ignora se non è un attore
-
-                if (castMap.containsKey(nuovoCodiceFilm)) {
-                    // Se il film è già presente nella mappa, aggiungo l'attore al cast
-                    castMap.get(nuovoCodiceFilm).add(nuovoCodiceAttore);
-                } else {
-                    // Se il film non è presente, creo un nuovo cast e aggiungo l'attore
-                    Set<Integer> nuovoCast = new TreeSet<>();
-                    nuovoCast.add(nuovoCodiceAttore);
-                    castMap.put(nuovoCodiceFilm, nuovoCast);
+                String[] campi = linea.split("\t");
+                String codiceFilm = campi[0];
+                Integer codiceAttore = parseCodiceAttore(campi[2]);
+        
+                if (!attori.containsKey(codiceAttore)) continue;
+        
+                if (!codiceFilm.equals(filmCorrente)) {
+                    if (filmCorrente != null) {
+                        // Aggiorna collaborazioni e film per il cast precedente
+                        aggiornaCollaborazioni(castCorrente, attori);
+                        aggiornaFilms(castCorrente, attori, filmCorrente);
+                    }
+                    filmCorrente = codiceFilm;
+                    castCorrente = new TreeSet<>();
                 }
+                castCorrente.add(codiceAttore);
             }
-
-            /* Aggiorno le collaborazioni per ogni film */
-            for (Map.Entry<String, Set<Integer>> entry : castMap.entrySet()) {
-                aggiornaCollaborazioni(entry.getValue(), attori);
-                aggiornaFilms(entry.getValue(), attori, entry.getKey());
+            // Aggiorna per l'ultimo film letto
+            if (filmCorrente != null) {
+                aggiornaCollaborazioni(castCorrente, attori);
+                aggiornaFilms(castCorrente, attori, filmCorrente);
             }
             br.close();
 
@@ -122,10 +98,7 @@ public class CreaGrafo {
         }
 
         /*
-         * Scrivo il file grafo.txt, dove:
-         * per ogni attore scrivo il suo codice, il numero di collaboratori
-         * e tutti i codici dei suoi collaboratori in ordine crescente
-         * tutto separato da tab
+         * Scrittura del file grafo.txt
          */
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter("grafo.txt"));
