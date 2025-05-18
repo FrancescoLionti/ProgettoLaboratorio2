@@ -33,10 +33,7 @@ clean-c:
 	rm -f $(FILE_O) $(ESEGUIBILE)
 
 # ==============================================================
-# 						Target generali
+# 			Pulizia
 # ==============================================================
-
-valgrind-c: c
-	valgrind --leak-check=full --show-leak-kinds=all $(ESEGUIBILE) $(C_INPUT) $(NTHREADS)
 
 clean: clean-java clean-c
