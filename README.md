@@ -125,7 +125,7 @@ Nel main,viene creata una struct ```dati``` di tipo ```datiGestoreSegnali```, po
 E come ultimo si crea il thread gestore segnali con ```xpthread_create(&trheadGestore, NULL, gestoreSegnali, &dati, QUI)```;
 
 ### Lettura dalla pipe:
-- Subito aver creato la pipe il main setta la variabile datifaseLettura=1, in modo da segnalare al threadGestore di essere entrari appunto nella fase di lettura
+- Subito dopo aver creato la pipe il main setta la variabile ```dati->faseLettura=1```, in modo da segnalare al threadGestore di essere entrari appunto nella fase di lettura
 - Poi entra in un ciclo in cui legge le coppie dalla pipe e, per ciascuna, avvia un thread calcolatore che esegue il cammino minimo tra due attori.
 - Durante ogni iterazione del ciclo, prima di elaborare una nuova coppia, creaPipe controlla (in sezione critica) il valore del flag termina. Se il flag è stato impostato a 1 dal gestore segnali, il ciclo si interrompe e la funzione procede alla chiusura della pipe e alla rimozione del file FIFO. In questo modo, il thread principale rispetta la richiesta di interruzione proveniente dal gestore dei segnali.
 - Ovviamente tutte le letture e modifiche dei dati condivisi con il gestore sono protetti da mutex
@@ -139,9 +139,9 @@ All’avvio, il gestore crea una maschera ```mask``` contenente ```SIGINT``` e `
 - Se la lettura dalla pipe non è ancora iniziata (```faseLettura == 0```), il gestore stampa un messaggio informativo su stderr, avvisando l’utente che la fase di costruzione del grafo è in corso
 - Se la lettura è già in corso (```faseLettura == 1```), il gestore riconosce che il programma è nella fase critica di elaborazione e decide di interrompere l’operazione. Accedendo in mutua esclusione al campo ```termina```, imposta ```termina = 1```, segnalando così al thread di lettura (cioè il main) la richiesta di arrestarsi. Subito dopo, il gestore esce dal loop di ascolto e termina.
 
-```SIGUSR1:``` quando il main ha finito di svolgere i suoi compiti (al termine della lettura dalla pipe e dopo aver gestito tutti i calcoli, ed aver atteso 20 sec), se il ThreadGestore non è ancora terminato invia ```SIGUSR1``` al gestore. Il thread riceve tale segnale e, riconoscendolo come istruzione di chiusura, esce immediatamente dal ciclo di ascolto e termina.
+```SIGUSR1:``` quando il main ha finito di svolgere i suoi compiti (al termine della lettura dalla pipe e dopo aver atteso 20 sec), se il ThreadGestore non è ancora terminato invia ```SIGUSR1``` al gestore. Il thread riceve tale segnale e, riconoscendolo come istruzione di chiusura, esce immediatamente dal ciclo di ascolto e termina.
 
-### Conclusione:
+### Considerazioni:
  L’uso di mutex nella manipolazione del flag ```termina``` ed ```faselettura``` assicura coerenza e assenza di race condition, mentre la separazione dei segnali in ```SIGUSR1``` e ```SIGINT``` permette di distinguere chiaramente tra la terminazione ordinaria e quella forzata dall’utente.
 
 # Modo con cui vengono memorizzate e gestite le partecipazioni degli attori all'interno del programma Java:
@@ -167,7 +167,7 @@ Durante la lettura del file ```title.principals.tsv```, costruisco una mappa ```
 - Il valore è un ```TreeSet``` di codici attori (Integer) che compongono il cast del film, ovviamente ordinati 
 
 ## Gestione delle partecipazioni:
-La gestione effettiva delle partecipazioni degli attori ai film avviene quando il cast di un film è completo. In quel momento, viene chiamata la funzione: ```aggiornaFilms(entry.getValue(), attori, entry.getKey());``` che svolge alcuni passi:
+La gestione effettiva delle partecipazioni degli attori ai film avviene quando il cast di ogni film è completo. In quel momento, viene chiamata la funzione: ```aggiornaFilms(entry.getValue(), attori, entry.getKey());``` che svolge alcuni passi:
 
 - **Conversione del codice film:** Viene rimosso il prefisso "tt" dalla stringa film e il resto viene convertito in int, per uniformarlo al formato usato nella classe ```Attore```.
 - **Aggiornamento dei singoli attori:** Si scorre ogni componente del cast del film. Se l’attore è presente nella mappa ```attori``` cioè se è un attore valido, allora si aggiunge il ```codiceFilm``` al suo set di ```film```.
